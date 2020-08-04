@@ -1,10 +1,18 @@
-const { db } = require('../db/db.json');
 const router = require('express').Router();
-const fs = require('fs');
-
+const { notes } = require('../db/db.json');
+const { uuidv4 } = require('uuid');
+const fs = require("fs");
 
 router.get('/notes', (req, res) => {
-    const result = findById(req.params.id, notes);
+  let results = notes;
+  if (req.query) {
+    results = filterByQuery(req.query, results);
+  }
+  res.json(results);
+});
+
+router.get('/notes/:id', (req, res) => {
+  const result = findById(req.params.id, notes);
   if (result) {
     res.json(result);
   } else {
@@ -12,33 +20,39 @@ router.get('/notes', (req, res) => {
   }
 });
 
+// How do I use uuidv4(); ??????????????
+
 router.post('/notes', (req, res) => {
-    req.body.id = notes.length.toString();
+   req.body.id = notes.length.toString();
+
+    const note = createNewNote(req.body, notes);
+    res.json(note);
+
+    fs.writeFileSync(
+        path.join(__dirname, '../db/db.json'),
+        JSON.stringify({ notes }, null, 2)
+      );
+      return notes;
   
-    if (!validateNotes(req.body)) {
-      res.status(400).send('The note is not properly formatted.');
-    } else {
-      const note = createNewNote(req.body, notes);
-      res.json(note);
-    }
-  });
-
-  
-  
-  module.exports = router;
+});
 
 
 
+router.delete('/notes/:id', (req, res, next)  =>  {
+    Room.findByIdAndRemove(req.params.id, req.body, (err, post) => {
+     if (err) return next(err);
+     res.json(post);
+    });
+   });
 
-// const { v4: uuidv4 } = require('uuid');
 
-// uuidv4();
+module.exports = router;
 
 
-// fs.readFile('../db/db.json', 'utf8', function(err, data){ 
-      
-//     // Display the file content 
-//     console.log(data); 
-// }); 
-  
-// console.log('readFile called'); 
+
+
+
+
+
+
+
